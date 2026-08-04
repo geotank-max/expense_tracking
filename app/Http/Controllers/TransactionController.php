@@ -41,4 +41,40 @@ class TransactionController extends Controller
 
         return view('dashboard', compact('totalIncome', 'totalExpense', 'expensesByCategory', 'recentTransactions', 'month'));
     }
+
+    public function create()
+    {
+        // Fetch categories owned by the logged-in user to populate the dropdown
+        $categories = Category::where('user_id', auth()->id())->get();
+
+        return view('transactions.create', compact('categories'));
+    }
+
+    /**
+     * Store a newly created transaction in storage.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'category_id'      => 'required|exists:categories,id',
+            'type'             => 'required|in:income,expense',
+            'amount'           => 'required|numeric|min:0.01',
+            'transaction_date' => 'required|date',
+            'description'      => 'nullable|string|max:255',
+        ]);
+
+        Transaction::create([
+            'user_id'          => auth()->id(),
+            'category_id'      => $request->category_id,
+            'type'             => $request->type,
+            'amount'           => $request->amount,
+            'transaction_date' => $request->transaction_date,
+            'description'      => $request->description,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Transaction added successfully!');
+    }
+
+
+
 }
